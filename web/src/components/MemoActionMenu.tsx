@@ -172,16 +172,16 @@ const MemoActionMenu = (props: Props) => {
       </MenuButton>
       <Menu className="text-sm" size="sm" placement="bottom-end">
         {!readonly && !isArchived && !isComment && (
-          <>
-            <MenuItem onClick={handleTogglePinMemoBtnClick}>
-              {memo.pinned ? <BookmarkMinusIcon className="w-4 h-auto" /> : <BookmarkPlusIcon className="w-4 h-auto" />}
-              {memo.pinned ? t("common.unpin") : t("common.pin")}
-            </MenuItem>
-            <MenuItem onClick={handleEditMemoClick}>
-              <Edit3Icon className="w-4 h-auto" />
-              {t("common.edit")}
-            </MenuItem>
-          </>
+          <MenuItem onClick={handleTogglePinMemoBtnClick}>
+            {memo.pinned ? <BookmarkMinusIcon className="w-4 h-auto" /> : <BookmarkPlusIcon className="w-4 h-auto" />}
+            {memo.pinned ? t("common.unpin") : t("common.pin")}
+          </MenuItem>
+        )}
+        {!readonly && !isArchived && (
+          <MenuItem onClick={handleEditMemoClick}>
+            <Edit3Icon className="w-4 h-auto" />
+            {t("common.edit")}
+          </MenuItem>
         )}
         {!isArchived && (
           <MenuItem onClick={handleCopyLink}>

@@ -1,7 +1,7 @@
 import { Select, Option, Divider } from "@mui/joy";
 import { Button } from "@usememos/mui";
 import { isEqual } from "lodash-es";
-import { LoaderIcon, SendIcon } from "lucide-react";
+import { Code2Icon, CheckSquareIcon, LoaderIcon, SendIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
@@ -446,6 +446,53 @@ const MemoEditor = observer((props: Props) => {
     [i18n.language],
   );
 
+  const handleCodeBlockClick = () => {
+    if (!editorRef.current) {
+      return;
+    }
+
+    const cursorPosition = editorRef.current.getCursorPosition();
+    const prevValue = editorRef.current.getContent().slice(0, cursorPosition);
+    if (prevValue === "" || prevValue.endsWith("\n")) {
+      editorRef.current.insertText("", "```\n", "\n```");
+    } else {
+      editorRef.current.insertText("", "\n```\n", "\n```");
+    }
+    setTimeout(() => {
+      editorRef.current?.scrollToCursor();
+      editorRef.current?.focus();
+    });
+  };
+
+  const handleCheckboxClick = () => {
+    if (!editorRef.current) {
+      return;
+    }
+
+    const currentPosition = editorRef.current.getCursorPosition();
+    const currentLineNumber = editorRef.current.getCursorLineNumber();
+    const currentLine = editorRef.current.getLine(currentLineNumber);
+    let newLine = "";
+    let cursorChange = 0;
+    if (/^- \[( |x|X)\] /.test(currentLine)) {
+      newLine = currentLine.replace(/^- \[( |x|X)\] /, "");
+      cursorChange = -6;
+    } else if (/^\d+\. |- /.test(currentLine)) {
+      const match = currentLine.match(/^\d+\. |- /) ?? [""];
+      newLine = currentLine.replace(/^\d+\. |- /, "- [ ] ");
+      cursorChange = -match[0].length + 6;
+    } else {
+      newLine = "- [ ] " + currentLine;
+      cursorChange = 6;
+    }
+    editorRef.current.setLine(currentLineNumber, newLine);
+    editorRef.current.setCursorPosition(currentPosition + cursorChange);
+    setTimeout(() => {
+      editorRef.current?.scrollToCursor();
+      editorRef.current?.focus();
+    });
+  };
+
   const allowSave = (hasContent || state.resourceList.length > 0) && !state.isUploadingResource && !state.isRequesting;
 
   return (
@@ -504,7 +551,16 @@ const MemoEditor = observer((props: Props) => {
         <div className="relative w-full flex flex-row justify-between items-center pt-2" onFocus={(e) => e.stopPropagation()}>
           <div className="flex flex-row justify-start items-center opacity-80 dark:opacity-60 -space-x-1">
             <TagSelector editorRef={editorRef} />
+            {/* Original Markdown Menu */}
             <MarkdownMenu editorRef={editorRef} />
+            {/* Code block button */}
+            <Button size="sm" variant="plain" onClick={handleCodeBlockClick}>
+              <Code2Icon className="w-5 h-5 mx-auto" />
+            </Button>
+            {/* Checkbox button */}
+            <Button size="sm" variant="plain" onClick={handleCheckboxClick}>
+              <CheckSquareIcon className="w-5 h-5 mx-auto" />
+            </Button>
             <UploadResourceButton isUploadingResource={state.isUploadingResource} />
             <AddMemoRelationPopover editorRef={editorRef} />
             {workspaceMemoRelatedSetting.enableLocation && (
