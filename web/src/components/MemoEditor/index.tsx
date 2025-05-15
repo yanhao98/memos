@@ -549,7 +549,7 @@ const MemoEditor = observer((props: Props) => {
         <ResourceListView resourceList={state.resourceList} setResourceList={handleSetResourceList} />
         <RelationListView relationList={referenceRelations} setRelationList={handleSetRelationList} />
         <div className="relative w-full flex flex-row justify-between items-center pt-2" onFocus={(e) => e.stopPropagation()}>
-          <div className="flex flex-row justify-start items-center opacity-80 dark:opacity-60 -space-x-1">
+          <div className="flex flex-row justify-start items-center opacity-80 dark:opacity-60 space-x-2">
             <TagSelector editorRef={editorRef} />
             {/* Original Markdown Menu */}
             <MarkdownMenu editorRef={editorRef} />
