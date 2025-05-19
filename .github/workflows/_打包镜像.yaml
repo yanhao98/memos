@@ -1,0 +1,61 @@
+name: _打包镜像
+
+on:
+  workflow_dispatch:
+  push:
+
+env:
+  TZ: Asia/Shanghai
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  push-image:
+    runs-on: ubuntu-latest
+    env:
+      # https://github.com/docker/metadata-action/tree/v5/?tab=readme-ov-file#semver
+      # Event: push,     Ref: refs/head/main,       Tags: main
+      # Event: push tag, Ref: refs/tags/v1.2.3,     Tags: 1.2.3, 1.2, 1, latest
+      # Event: push tag, Ref: refs/tags/v2.0.8-rc1, Tags: 2.0.8-rc1
+      METADATA_ACTION_TAGS: |
+        type=ref,event=branch
+        type=semver,pattern={{version}}
+        type=semver,pattern={{major}}.{{minor}}
+        type=semver,pattern={{major}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+
+      - name: ⚙️ 设置 Node 环境
+        uses: yanhao98/composite-actions/setup-node-environment@main
+        with:
+          working-directory: web
+      - name: Run frontend build
+        run: pnpm release
+        working-directory: web
+
+      - name: 🔑 登录 GitHub Container Registry
+        uses: docker/login-action@master
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 🐳 构建并推送 Docker 镜像
+        uses: yanhao98/composite-actions/docker-build-push@main
+        with:
+          file: ./scripts/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          load: false
+          meta_images: ghcr.io/${{ github.repository }}
+          meta_tags: ${{ env.METADATA_ACTION_TAGS }}
+          cache-from: type=gha,scope=${{ github.workflow }}
+          cache-to: type=gha,scope=${{ github.workflow }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
